@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs and runtime outputs
+logs/
+*.log
+
+# Model/cache files
+**/.cache/
+docker/embedding/bge-large-zh-v1.5/
+
+# Local secrets / machine-specific config
+.env
+conf/app_config.yaml

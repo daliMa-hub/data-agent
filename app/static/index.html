@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Agent</title>
+  <style>
+    :root {
+      --bg: #f4f6fa;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --ink: #172033;
+      --text: #344054;
+      --muted: #667085;
+      --subtle: #98a2b3;
+      --line: #d7dde8;
+      --line-soft: #edf1f7;
+      --brand: #2563eb;
+      --brand-weak: #e8f0ff;
+      --ok: #15803d;
+      --ok-bg: #e7f8ed;
+      --error: #b42318;
+      --error-bg: #feeceb;
+      --running: #1d4ed8;
+      --running-bg: #e6efff;
+      --shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Inter", "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    button,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--brand);
+      font-weight: 800;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      min-width: 96px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 13px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--subtle);
+      flex: 0 0 auto;
+    }
+
+    .dot.running {
+      background: var(--brand);
+      box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.12);
+    }
+
+    .dot.done,
+    .dot.success {
+      background: var(--ok);
+    }
+
+    .dot.error {
+      background: var(--error);
+    }
+
+    .workspace {
+      width: min(1360px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 14px 16px;
+      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.92fr) minmax(460px, 1.08fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line-soft);
+      background: var(--surface);
+    }
+
+    .panel-title {
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .panel-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .query-body {
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 164px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: var(--surface-soft);
+      line-height: 1.6;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--brand);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .query-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .preset {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .preset:hover {
+      border-color: #9db7f5;
+      background: var(--brand-weak);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 15px;
+      color: #fff;
+      background: var(--brand);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      background: #9aa8bd;
+      transform: none;
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: #fff;
+      border-color: var(--line);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-soft);
+      border-color: #c6cfdd;
+    }
+
+    .trace {
+      padding: 6px 18px 14px;
+      min-height: 292px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .step:last-child {
+      border-bottom: 0;
+    }
+
+    .step-index {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--subtle);
+      background: #eef2f7;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .step.running .step-index {
+      color: var(--running);
+      background: var(--running-bg);
+    }
+
+    .step.success .step-index {
+      color: var(--ok);
+      background: var(--ok-bg);
+    }
+
+    .step.error .step-index {
+      color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .step .name {
+      color: var(--ink);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .badge {
+      min-width: 74px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0 10px;
+      color: var(--muted);
+      background: #f1f4f9;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step.running .badge {
+      color: var(--running);
+      background: var(--running-bg);
+    }
+
+    .step.success .badge {
+      color: var(--ok);
+      background: var(--ok-bg);
+    }
+
+    .step.error .badge {
+      color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .result-panel {
+      margin-top: 16px;
+    }
+
+    .result-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-btn {
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 10px;
+      color: var(--text);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      background: var(--surface-soft);
+    }
+
+    .result-body {
+      padding: 16px 18px 18px;
+    }
+
+    pre {
+      margin: 0;
+      min-height: 260px;
+      max-height: 460px;
+      overflow: auto;
+      border: 1px solid #101828;
+      border-radius: 8px;
+      padding: 14px;
+      background: #0f172a;
+      color: #e5edf8;
+      font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.58;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .empty {
+      color: #9fb0c8;
+    }
+
+    .desktop-only {
+      display: inline;
+    }
+
+    @media (max-width: 980px) {
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        height: auto;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 16px;
+      }
+
+      .workspace {
+        width: min(100vw - 24px, 1360px);
+        padding-top: 14px;
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .desktop-only {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">DA</div>
+        <div>
+          <div class="brand-title">Data Agent</div>
+          <div class="brand-subtitle">自然语言数据查询工作台</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="status-pill">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">就绪</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="summary">
+        <div class="metric">
+          <div class="metric-label">当前任务</div>
+          <div id="currentTask" class="metric-value">待提交</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">执行进度</div>
+          <div id="progressValue" class="metric-value">0 / 0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">结果状态</div>
+          <div id="resultState" class="metric-value">等待</div>
+        </div>
+      </section>
+
+      <section class="main-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">查询输入</div>
+          </div>
+          <div class="query-body">
+            <label for="queryInput">业务问题</label>
+            <textarea id="queryInput" placeholder="输入要查询的业务问题">统计华北地区的销售总额</textarea>
+
+            <div class="query-presets">
+              <button class="preset" type="button">统计华北地区的销售总额</button>
+              <button class="preset" type="button">各品类的销售额排名</button>
+              <button class="preset" type="button">不同会员等级的平均订单金额</button>
+            </div>
+
+            <div class="actions">
+              <button id="submitBtn" class="btn" type="button">提交查询</button>
+              <button id="clearBtn" class="btn btn-secondary" type="button">清空结果</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">执行链路</div>
+            <div id="stepCount" class="panel-meta">0 steps</div>
+          </div>
+          <div id="timeline" class="trace"></div>
+        </div>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="panel-header">
+          <div class="panel-title">查询结果</div>
+          <div class="result-tools">
+            <button id="copyBtn" class="mini-btn" type="button">复制</button>
+          </div>
+        </div>
+        <div class="result-body">
+          <pre id="resultBox"><span class="empty">等待查询结果。</span></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const queryInput = document.getElementById("queryInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const timeline = document.getElementById("timeline");
+    const resultBox = document.getElementById("resultBox");
+    const stepCount = document.getElementById("stepCount");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const currentTask = document.getElementById("currentTask");
+    const progressValue = document.getElementById("progressValue");
+    const resultState = document.getElementById("resultState");
+    const presetBtns = document.querySelectorAll(".preset");
+    const steps = new Map();
+
+    function setStatus(text, type = "") {
+      statusText.textContent = text;
+      statusDot.className = `dot ${type}`;
+      resultState.textContent = text;
+    }
+
+    function updateProgress() {
+      const done = [...steps.values()].filter((el) => el.classList.contains("success")).length;
+      progressValue.textContent = `${done} / ${steps.size}`;
+      stepCount.textContent = `${steps.size} steps`;
+    }
+
+    function clearOutput() {
+      steps.clear();
+      timeline.innerHTML = "";
+      resultBox.innerHTML = '<span class="empty">等待查询结果。</span>';
+      stepCount.textContent = "0 steps";
+      progressValue.textContent = "0 / 0";
+      currentTask.textContent = "待提交";
+      setStatus("就绪");
+    }
+
+    function upsertStep(stepName, status) {
+      if (!steps.has(stepName)) {
+        const el = document.createElement("div");
+        el.className = "step";
+        el.innerHTML = `
+          <span class="step-index"></span>
+          <span class="name"></span>
+          <span class="badge"></span>
+        `;
+        timeline.appendChild(el);
+        steps.set(stepName, el);
+      }
+
+      const el = steps.get(stepName);
+      const index = [...steps.keys()].indexOf(stepName) + 1;
+      el.className = `step ${status || ""}`;
+      el.querySelector(".step-index").textContent = index;
+      el.querySelector(".name").textContent = stepName;
+      el.querySelector(".badge").textContent = status || "pending";
+      updateProgress();
+    }
+
+    function setResult(payload) {
+      resultBox.textContent = JSON.stringify(payload, null, 2);
+      setStatus("已返回", "done");
+    }
+
+    function handleEvent(data) {
+      if (data.type === "progress") {
+        upsertStep(data.step || "未知步骤", data.status || "running");
+        return;
+      }
+
+      if (data.type === "result") {
+        setResult(data.data);
+        return;
+      }
+
+      if (data.type === "error") {
+        resultBox.textContent = data.message || "查询失败";
+        setStatus("查询失败", "error");
+        return;
+      }
+
+      resultBox.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function submitQuery() {
+      const query = queryInput.value.trim();
+      if (!query) {
+        queryInput.focus();
+        return;
+      }
+
+      clearOutput();
+      currentTask.textContent = "执行中";
+      setStatus("查询中", "running");
+      submitBtn.disabled = true;
+      let failed = false;
+
+      try {
+        const response = await fetch("/api/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+
+          for (const event of events) {
+            const line = event.split("\n").find((item) => item.startsWith("data:"));
+            if (!line) continue;
+            const payload = line.slice(5).trim();
+            if (!payload) continue;
+            handleEvent(JSON.parse(payload));
+          }
+        }
+
+        if (buffer.trim().startsWith("data:")) {
+          handleEvent(JSON.parse(buffer.trim().slice(5).trim()));
+        }
+      } catch (error) {
+        failed = true;
+        resultBox.textContent = error.message || String(error);
+        setStatus("查询失败", "error");
+      } finally {
+        if (!failed && statusText.textContent !== "查询失败") {
+          setStatus("完成", "done");
+        }
+        currentTask.textContent = failed ? "失败" : "完成";
+        submitBtn.disabled = false;
+      }
+    }
+
+    presetBtns.forEach((button) => {
+      button.addEventListener("click", () => {
+        queryInput.value = button.textContent.trim();
+        queryInput.focus();
+      });
+    });
+
+    submitBtn.addEventListener("click", submitQuery);
+    clearBtn.addEventListener("click", clearOutput);
+    copyBtn.addEventListener("click", async () => {
+      const text = resultBox.textContent.trim();
+      if (!text || text === "等待查询结果。") return;
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "已复制";
+      setTimeout(() => {
+        copyBtn.textContent = "复制";
+      }, 1200);
+    });
+
+    queryInput.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        submitQuery();
+      }
+    });
+  </script>
+</body>
+</html>
