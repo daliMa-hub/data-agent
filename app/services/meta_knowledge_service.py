@@ -183,12 +183,12 @@ class MetaKnowledgeService:
                 )
                 column_metrics.append(column_metric)
 
-            # ③ 批量写入 meta 库
-            async with self.meta_mysql_repository.session.begin():
-                self.meta_mysql_repository.save_metric_infos(metric_infos)
-                self.meta_mysql_repository.save_column_metrics(column_metrics)
+        # ③ 批量写入 meta 库
+        async with self.meta_mysql_repository.session.begin():
+            await self.meta_mysql_repository.save_metric_infos(metric_infos)
+            await self.meta_mysql_repository.save_column_metrics(column_metrics)
 
-            return metric_infos
+        return metric_infos
 
     async def _save_metrics_to_qdrant(self, metric_infos: list[MetricInfo]):
         """

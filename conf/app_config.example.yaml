@@ -12,15 +12,15 @@ logging:
 db_meta:
   host: localhost
   port: 3306
-  user: your_user
-  password: your_password
+  user: atguigu
+  password: data_agent_password
   database: meta
 
 db_dw:
   host: localhost
   port: 3306
-  user: your_user
-  password: your_password
+  user: atguigu
+  password: data_agent_password
   database: dw
 
 qdrant:
@@ -43,4 +43,3 @@ llm:
   model_name: your_model_name
   api_key: your_api_key
   base_url: https://api.example.com/v1
-

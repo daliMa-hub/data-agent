@@ -38,11 +38,15 @@ class MetaMySQLRepository:
             model = ColumnInfoMapper.to_model(column_info)
             await self.session.merge(model)
 
-    def save_metric_infos(self, metric_infos: list[MetricInfo]):
-        self.session.add_all([MetricInfoMapper.to_model(metric_info) for metric_info in metric_infos])
+    async def save_metric_infos(self, metric_infos: list[MetricInfo]):
+        for metric_info in metric_infos:
+            model = MetricInfoMapper.to_model(metric_info)
+            await self.session.merge(model)
 
-    def save_column_metrics(self, column_metrics: list[ColumnMetric]):
-        self.session.add_all([ColumnMetricMapper.to_model(column_metric) for column_metric in column_metrics])
+    async def save_column_metrics(self, column_metrics: list[ColumnMetric]):
+        for column_metric in column_metrics:
+            model = ColumnMetricMapper.to_model(column_metric)
+            await self.session.merge(model)
 
     async def get_column_info_by_id(self, id: str) -> ColumnInfo | None:
         column_info: ColumnInfoMySQL | None = await self.session.get(ColumnInfoMySQL, id)

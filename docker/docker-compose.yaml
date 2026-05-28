@@ -5,9 +5,9 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: Atguigu.123
-      MYSQL_USER: atguigu
-      MYSQL_PASSWORD: Atguigu.123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-data_agent_root}
+      MYSQL_USER: ${MYSQL_USER:-atguigu}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-data_agent_password}
     ports:
       - "3306:3306"
     volumes:
@@ -56,11 +56,9 @@ services:
     ports:
       - "8081:80"
     environment:
-      MODEL_ID: /models/bge-large-zh-v1.5
+      MODEL_ID: BAAI/bge-large-zh-v1.5
       MAX_CONCURRENT_REQUESTS: "16"
       MAX_BATCH_TOKENS: "16384"
-    volumes:
-      - ./embedding/bge-large-zh-v1.5:/models/bge-large-zh-v1.5
 
 volumes:
   mysql_data:

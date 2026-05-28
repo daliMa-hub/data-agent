@@ -27,6 +27,20 @@ Then edit `conf/app_config.yaml` with your local database, embedding, Elasticsea
 
 3. Start backend services with Docker if needed.
 
+```powershell
+cd docker
+docker compose up -d
+```
+
+The compose file starts MySQL, Elasticsearch, Kibana, Qdrant, and a Hugging Face TEI embedding service. MySQL uses demo credentials by default:
+
+```text
+user: atguigu
+password: data_agent_password
+```
+
+You can override them with environment variables such as `MYSQL_USER` and `MYSQL_PASSWORD`.
+
 4. Build metadata knowledge.
 
 ```powershell
@@ -40,4 +54,3 @@ Then edit `conf/app_config.yaml` with your local database, embedding, Elasticsea
 ```
 
 Open `http://127.0.0.1:8000/`.
-
