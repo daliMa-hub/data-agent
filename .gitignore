@@ -29,3 +29,4 @@ docker/embedding/bge-large-zh-v1.5/
 # Local secrets / machine-specific config
 .env
 conf/app_config.yaml
+.tools/
